@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class GameController : MonoBehaviour
     public float cubeChangePlaseSpeed = 0.5f;
     public Transform cubeToPlace;
     public float camMoveToYPosition,camMoveSpeed=2f;
+
+    public Text scoreText;
 
     public GameObject cubeToCreate, allCubes, vfx;
     public GameObject[] canvasStartPage;
@@ -22,7 +25,7 @@ public class GameController : MonoBehaviour
 
     private List<Vector3> allCubesPositions = new List<Vector3>
     {
-        new Vector3(0,0,0),
+    new Vector3(0,0,0),
     new Vector3(1,0,0),
     new Vector3(-1,0,0),
     new Vector3(0,1,0),
@@ -38,13 +41,15 @@ public class GameController : MonoBehaviour
     private Transform mainCam; 
 
     private void Start()
-    {  
-        toCameraColor=Camera.main.backgroundColor;
+    {
+        scoreText.text = "<size=22><color=#E06156>Best score:</color></size>" + PlayerPrefs.GetInt("score") + " \n<size=22> now:</size> 0";
+
+        toCameraColor =Camera.main.backgroundColor;
         mainCam = Camera.main.transform;
         camMoveToYPosition = 5.9f + nowCube.y - 1f; 
 
         allCubesRb = allCubes.GetComponent<Rigidbody>();
-     showCubePlace = StartCoroutine(ShowCubePlace());
+        showCubePlace = StartCoroutine(ShowCubePlace());
         
     } 
      
@@ -90,8 +95,10 @@ public class GameController : MonoBehaviour
 
         mainCam.localPosition = Vector3.MoveTowards(mainCam.localPosition,
             new Vector3(mainCam.localPosition.x, camMoveToYPosition, mainCam.localPosition.z), 
-            camMoveSpeed*Time.deltaTime);
-        if (Camera.main.backgroundColor != toCameraColor)  //for slow change color bg
+            camMoveSpeed*Time.deltaTime);  
+
+        // For slow change color bg
+        if (Camera.main.backgroundColor != toCameraColor) 
             Camera.main.backgroundColor = Color.Lerp(Camera.main.backgroundColor, toCameraColor, Time.deltaTime / 1.5f);
     }
 
@@ -142,7 +149,9 @@ public class GameController : MonoBehaviour
     private void MoveCameraChangeBg()
     {
         int maxX = 0, maxY = 0, maxZ = 0, maxHor; 
-        foreach(Vector3 pos in allCubesPositions) //ÀËÃÎÐÈÒÌ ÏÎ ÏÎËÓ×ÅÍÈÞ ÌÀÊÑÈÌÀËÜÍÎÃÎ ÝËÈÌÅÍÒÀ 
+
+        // ALGORITHM FOR OBTAINING THE MAXIMUM ELEMENT 
+        foreach (Vector3 pos in allCubesPositions)  
         {
             if (Mathf.Abs(Convert.ToInt32(pos.x))>maxX)
                 maxX = Convert.ToInt32(pos.x);
@@ -151,9 +160,23 @@ public class GameController : MonoBehaviour
             if (Mathf.Abs(Convert.ToInt32(pos.z)) > maxZ)
                 maxZ = Convert.ToInt32(pos.z);
         }
-        camMoveToYPosition = 5.9f + nowCube.y - 1f;
-        maxHor = maxX > maxZ ? maxX : maxZ; //òåðíàðíàÿ îïåðàöèÿ  
-        if(maxHor %3 == 0 && prevCoutMaxHorizontal != maxHor)
+        maxY--; 
+
+        // Save score
+        if (PlayerPrefs.GetInt("score") < maxY)
+        {
+            PlayerPrefs.SetInt("score", maxY);
+        }
+
+
+        scoreText.text = "<size=22><color=#E06156>Best score:</color></size>" + PlayerPrefs.GetInt("score") + " \n<size=22> now:</size>"+maxY;
+
+        camMoveToYPosition = 5.9f + nowCube.y - 1f; 
+
+        // Ternary operation
+        maxHor = maxX > maxZ ? maxX : maxZ;    
+
+        if (maxHor %3 == 0 && prevCoutMaxHorizontal != maxHor)
         {
             mainCam.localPosition -= new Vector3(0, 0, -2.5f);
             prevCoutMaxHorizontal = maxHor;
